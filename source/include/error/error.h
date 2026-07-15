@@ -3,6 +3,8 @@
 
     /* --- --- --- [ ERROR CLUSTER ] --- --- --- */
         #include "./file.h"
+#include <errno.h>
+#include <stddef.h>
     /* --- --- --- */
 
     /* --- --- --- [ ERROR TYPES ] --- --- --- */
@@ -43,33 +45,61 @@
         //      - expects all x(error, help) "error" to be unique for naming
     /* --- --- --- */
 
-    /* --- --- --- [ ERROR LIST ] --- --- --- */
-    #define X(type)                                         \
-        INKY_##type##_ERROR_BUCKET [] = {                   \
-            INKY_TRIVIAL_##type##_ERROR,                    \
-            [ INKY_NO_##type##_ERROR ] = (char*)0,          \
-            INKY_FATAL_##type##_ERROR                       \
-        }
+    /* --- --- --- [ ERROR LISTING AND LOOKUP ] --- --- --- */
+        /* - - - [ Listing ] - - - */
+            #define X(type)                                         \
+                INKY_##type##_ERROR_BUCKET [] = {                   \
+                    INKY_TRIVIAL_##type##_ERROR,                    \
+                    [ INKY_NO_##type##_ERROR ] = (char*)0,          \
+                    INKY_FATAL_##type##_ERROR                       \
+                }
 
-    #define x(error, issue, help)                           \
-        [ INKY_##error##_ERROR ] = {                        \
-            .i = { issue, sizeof(issue) - 1 },              \
-            .h = { help, sizeof(help) - 1 },                \
-        }
+            #define INKY_ERROR_FORMAT(error, issue, help)           \
+                #error"\n"                                          \
+                "  -" issue " issue\n"                              \
+                "  -check " help "\n"
 
-    const struct INKY_ERROR_BUCKET {
-        const struct {
-            const char* issue;
-            const unsigned int len;
-        } i;
-        const struct {
-            const char* help;
-            const unsigned int len;
-        } h;
-    } INKY_ERROR_TYPE;
+            #define x(error, issue, help)                           \
+                [ INKY_##error##_ERROR ] = {                        \
+                    .Error = {                                      \
+                        .message = INKY_ERROR_FORMAT(               \
+                            INKY_##error##_ERROR, issue, help       \
+                        ),                                          \
+                        .length = sizeof(INKY_ERROR_FORMAT(         \
+                            INKY_##error##_ERROR, issue, help       \
+                        )) - 1                                      \
+                    },                                              \
+                    .Code = INKY_##error##_ERROR                    \
+                }
 
-    #undef X
-    #undef x
+            const struct INKY_ERROR_BUCKET {
+                const struct {
+                    const char* message;
+                    const int length;
+                } Error;
+                const int Code;
+            } INKY_ERROR_TYPE;
+
+            #undef X
+            #undef INKY_ERROR_FORMAT
+            #undef x
+        /* - - - */
+
+        // SUMMARY:
+        //
+        // # INKY_ERROR_BUCKET
+        //      - is a compile-time lookup table for each error type
+        //      - indexed directly by the corresponding INKY_*_ERROR enum value
+        //      - stores immutable error metadata and the associated error code
+        //
+        // # INKY_ERROR_FORMAT(error, issue, help)
+        //      - builds a compile-time formatted error message string
+        //      - stringifies the error identifier and embeds issue/help text
+        //
+        // # x(error, issue, help)
+        //      - converts an error definition into an indexed bucket entry
+        //      - computes the formatted message length at compile time
+        //      - relies on the x(error, issue, help) entries defined by each error type
     /* --- --- --- */
 
 

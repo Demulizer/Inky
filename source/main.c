@@ -1,14 +1,17 @@
 #include <stdio.h>
+#include <unistd.h>
 
 #include "./include/error/error.h"
 
 int main(void)
 {
-    printf("%s\n", INKY_FILE_ERROR_BUCKET[INKY_FILE_EMPTY_ERROR].i);
-    printf("%s\n", INKY_FILE_ERROR_BUCKET[INKY_FILE_EMPTY_ERROR].h);
+    fwrite(
+        INKY_FILE_ERROR_BUCKET[INKY_FILE_EMPTY_ERROR].Error.message,
+        INKY_FILE_ERROR_BUCKET[INKY_FILE_EMPTY_ERROR].Error.length,
+        1, stderr
+    );
+    fprintf(stderr, "[ %d ]\n", INKY_FILE_EMPTY_ERROR);
 
-    printf("%s\n", INKY_FILE_ERROR_BUCKET[INKY_FILE_PERMISSION_ERROR].i);
-    printf("%s\n", INKY_FILE_ERROR_BUCKET[INKY_FILE_PERMISSION_ERROR].h);
 
     return 0;
 }
